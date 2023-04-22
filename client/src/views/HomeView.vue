@@ -2,7 +2,7 @@
 nav.navbar.is-dark(role="navigation", aria-label="main navigation")
   .navbar-brand
     a.navbar-item
-      .nav-title SO_FIT
+      .nav-title _VIVA
       //- img(src="https://bulma.io/images/bulma-logo.png", alt="", width="112", height="28")
     a.navbar-burger(role="button", aria-label="menu", aria-expanded="false")
       span(aria-hidden="true")
@@ -173,7 +173,7 @@ export default {
     }
   },
   mounted(){
-
+    // this.getExercises();
   },
   methods: {
     getExercise(){
@@ -183,6 +183,11 @@ export default {
         this.isLoaded = true;
         this.loading = false;
       },2000);
+    },
+    getExercises(){
+      this.$http.get('https://whispering-reef-15102.herokuapp.com/exercises/').then((response) => {
+        console.log(response);
+      })
     },
     clearData(){
       // this.isloaded = false;
@@ -197,6 +202,7 @@ export default {
       console.log(idx);
       this.equipmentList.splice(idx, 1);
     }
+    
   }
 }
 </script>

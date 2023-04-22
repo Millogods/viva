@@ -1,52 +1,86 @@
 <template lang="pug">
 nav.navbar.is-dark(role="navigation", aria-label="main navigation")
-.navbar-brand
-  a.navbar-item
-    .nav-title _VIVA
+  .navbar-brand
+    a.navbar-item
+      .nav-title _VIVA
     //- img(src="https://bulma.io/images/bulma-logo.png", alt="", width="112", height="28")
-  a.navbar-burger(role="button", aria-label="menu", aria-expanded="false")
-    span(aria-hidden="true")
-    span(aria-hidden="true")
-    span(aria-hidden="true")
+  //- a.navbar-burger(role="button", aria-label="menu", aria-expanded="false")
+  //-   span(aria-hidden="true")
+  //-   span(aria-hidden="true")
+  //-   span(aria-hidden="true")
 .main
   .layout-content
     .block
       .columns
+        h1 Admin Panel
+    .block
+      .columns
         .column
-          h1 Admin Panel
+          table.table.is-bordered.is-hoverable.is-fullwidth
+            thead
+              tr
+                th Id
+                th Excersise Name
+                th Category
+                th Body Section
+                th Equitpment
+                th Primary Muscles
+                th Secondary Muscles
+                th Image Source
+                //- th Video Source
+            tbody
+              tr(v-for="(exercise, index) in exercises" :key="index")
+                td {{ exercise.id }}
+
+                td {{ exercise.name }}
+
+                td {{ exercise.category }}
+                  
+                td {{ exercise.bodySection }}
+                  
+                td {{ exercise.equipment }}
+                  
+                td {{ exercise.primaryMuscle }}
+                  
+                td {{ exercise.secondaryMuscle }}
+                  
+                td {{ exercise.pictureLink }}
+
+                //- td {{ exercise.videoLink }}
+                  
+
+    .block
+      .columns
         .column
-        table.table.is-bordered.is-hoverable.is-fullwidth
-          thead
-            tr
-              th Category
-              th Body Section
-              th Equipment Name
-              th Primary Muscles
-              th Secondary Muscles
-              th Exercise ID
-              th Exercise Type
-              th Video Source
-              th Image Source
-          tbody
-            tr(v-for="(exercise, index) in exercises" :key="index")
-              td
-                input(type="text" v-model="exercise.category")
-              td
-                input(type="text" v-model="exercise.bodySection")
-              td
-                input(type="text" v-model="exercise.equipmentName")
-              td
-                input(type="text" v-model="exercise.primaryMuscles")
-              td
-                input(type="text" v-model="exercise.secondaryMuscles")
-              td
-                input(type="text" v-model="exercise.exerciseId")
-              td
-                input(type="text" v-model="exercise.exerciseType")
-              td
-                input(type="text" v-model="exercise.videoSource")
-              td
-                input(type="text" v-model="exercise.imageSource")
+          .box
+            .h1 Create Exersice
+            .field
+              label.label Category 
+              .control 
+                .select 
+                  select
+                    option Resistance
+                    option Cardio
+                    option Flexibility
+                  
+              label.label Body Section
+              .control 
+                .select 
+                  select
+                    option Full Body
+                    option Upper Body
+                    option Lower Body
+                    option Core
+
+            .field
+              label.label Name *
+                input.input(type="text" v-model="name")
+            
+              label.label Equitpment
+                input.input(type="text" v-model="equipment")
+
+            .buttons
+              button.button.is-link(@click="createExercises") Create
 
     </template>
     
@@ -60,30 +94,47 @@ export default {
   },
   data() {
     return {
-      data() {
-    return {
-      exercises: [
-        {
-          category: '',
-          bodySection: '',
-          equipmentName: '',
-          primaryMuscles: '',
-          secondaryMuscles: '',
-          exerciseId: '',
-          exerciseType: '',
-          videoSource: '',
-          imageSource: '',
-        },
-      ],
-    };
-  },
+      exercises: [],
+      createInput:{
+        category:'',
+        bodySection: '',
+        name: '',
+        equipment: '',
+        primaryMuscle: '',
+        secondaryMuscle: '',
+      }
     }
+    
   },
   mounted() {
-
+    this.getExercises();
   },
   methods: {
-    //
+    getExercises(){
+      this.$http.get('https://whispering-reef-15102.herokuapp.com/exercises/').then((response) => {
+        console.log(response.data);
+        this.exercises = response.data;
+      })
+    },
+    createExercises(){
+      const body = {
+        bodySection: 'lower body',
+        name: 'new test 12',
+        // type:this.type //this doesnt work and isnt needed
+        equipment:'bells',
+        primaryMuscle:'primaryMusclesTest2',
+        secondaryMuscle:'secondaryMusclesTest2',
+        category: 'core',
+        pictureLink: "https://cdn.pixabay.com/photo/2015/04/23/22/00/tree-736885__480.jpg"
+
+      }
+
+      console.log('new input',body);
+      this.$http.post('https://whispering-reef-15102.herokuapp.com/exercises/', body).then((response) => {
+        console.log(response);
+        this.getExercises();
+      })
+    },
   }
 }
 </script>
@@ -100,11 +151,6 @@ export default {
   padding: 2rem;
 }
 
-.image img {
-  height: 100% !important;
-  object-fit: cover !important;
-}
-
 .padding {
   margin-right: 5px;
 }
@@ -119,38 +165,6 @@ export default {
   letter-spacing: .5rem;
 }
 
-.results {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 600px;
-  width: 100%;
-  margin: 0;
-}
-
-.results .text {
-  display: flex;
-  text-align: center;
-  justify-content: center;
-  color: gray;
-}
-
-.overlay {
-  display: flex;
-  margin-left: auto;
-  margin-right: auto;
-  width: 50%;
-  opacity: 0.4;
-  filter: grayscale(100%);
-}
-
-.level-left a {
-  color: rgb(177, 177, 177);
-}
-
-.level-left a:hover {
-  color: rgb(112, 112, 252);
-}
 </style>
     
     
