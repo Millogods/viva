@@ -16,7 +16,7 @@ nav.navbar.is-dark(role="navigation", aria-label="main navigation")
           h1 Select Workout
         .column
           p.control.has-icons-left
-            input.input(type="text", placeholder="Search")
+            input.input(type="text", placeholder="Search", v-model="searchInput")
             span.icon.is-left
               i.fas.fa-search(aria-hidden="true")
 
@@ -82,6 +82,9 @@ nav.navbar.is-dark(role="navigation", aria-label="main navigation")
         img.overlay(src="../assets/gym_rats.png")
         h1.text(v-if="loading") Lets find you some exerisces...
         h1.text(v-else) Nothing will work unless you do
+    .block(v-if="isLoaded")
+      strong found 3 results for arm workouts with 
+      | kettlebells
     .block
       XyzTransitionGroup(xyz="fade stagger")
         .box(v-if="isLoaded" v-for="exercise in data" :key="exercise.id" xyz="inherit down")
@@ -169,7 +172,8 @@ export default {
         "Ab roller", "Yoga Mat", "Yoga blocks", "Yoga blanket", "Step bench"
       ],
       loading: false,
-      isLoaded: false
+      isLoaded: false,
+      searchInput: ''
     }
   },
   mounted(){
