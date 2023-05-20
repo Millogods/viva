@@ -1,5 +1,4 @@
 <template lang="pug">
-Notfi 
 nav.navbar.is-dark(role="navigation", aria-label="main navigation")
   .navbar-brand
     a.navbar-item
@@ -117,7 +116,7 @@ nav.navbar.is-dark(role="navigation", aria-label="main navigation")
           .box
             .field(v-if="selectedTab !== 'create'")
               label.label ID *
-                input.input(type="text" v-model.trim="exInput.id", @change="getExercise")
+                input.input(type="text" placeholder="input id and press return key" v-model.trim="exInput.id", @change="getExercise")
 
             .field(v-if="selectedTab !== 'delete'")
               .field
@@ -173,6 +172,9 @@ nav.navbar.is-dark(role="navigation", aria-label="main navigation")
                       option(value="Arms") Arms
                       option(value="Core") Core
                       option(value="Legs") Legs
+
+                  span(v-if="invalidBodySection")
+                    p.has-text-danger Invalid Body Section "{{ exInput.bodySection }}" drop down list values only (case sensitive)
                   
               .field
                 label.label Equitpment
@@ -181,16 +183,16 @@ nav.navbar.is-dark(role="navigation", aria-label="main navigation")
                     input(type='radio' :value="null" v-model="exInput.equipments" @click="clearEquitpment")
                     | None
                 .control.has-icons-right
-                  input.input.is-clearable(type="text" :value="inputEquitpmentValue" @change="updateEquitpmentValues")
+                  input.input.is-clearable(type="text" placeholder="comma separated values" :value="inputEquitpmentValue" @change="updateEquipmentValues")
                   span.icon.is-right
                     button.delete(@click='clearEquitpment')
-                  p {{ equitpmentValues }}
-                  //- div(v-for="item in equitpmentValues" :key="item") {{ item }}
+                  p {{ equipmentValues }}
+                  //- div(v-for="item in equipmentValues" :key="item") {{ item }}
 
               .field
                 label.label Muscle Groups
                 .control.has-icons-right
-                  input.input(type="text" :value.trim="inputMuscleValue" @change="updateMuscleValues")
+                  input.input(type="text" placeholder="comma separated values" :value="inputMuscleValue" @change="updateMuscleValues")
                   span.icon.is-right
                     button.delete(@click='clearMuscles')
                   p {{ muscleValues }}
@@ -209,6 +211,7 @@ nav.navbar.is-dark(role="navigation", aria-label="main navigation")
                 button.button.is-link(v-if="selectedTab === 'create'" @click="createExercise") Create
                 button.button.is-link(v-if="selectedTab === 'update'" @click="updateExercise") Update
                 button.button.is-link(v-if="selectedTab === 'delete'" @click="deleteExercise") Delete
+                a.button.is-text(@click="clearExInput") Clear Input 
 
           .box
             .field
@@ -225,12 +228,23 @@ nav.navbar.is-dark(role="navigation", aria-label="main navigation")
                     | {{ file.name || &quot;&quot;}}
             progress.progress(:value='uploadProgress', max='100', v-if='uploadProgress !== null')
 
+          .box
+            .field
+              label.label Delete All Exercises
+              button.button.is-danger(@click="showConfirmDeleteAll = true") Delete All
+            .field(v-if="showConfirmDeleteAll")
+              strong Are you Sure you want to delete ALL data theres not going back?
+              .field
+                a(@click="deleteAllExercises") Yes
+              .field
+                a(@click="showConfirmDeleteAll = false") No
+
+
         //- pre {{ exInput }}
     </template>
     
 <script>
 import Typeahead from 'vue3-simple-typeahead';
-import Notifi from '@kyvg/vue3-notification'
 
 
 const baseUrl = 'https://whispering-reef-15102.herokuapp.com';
@@ -238,7 +252,6 @@ const baseUrl = 'https://whispering-reef-15102.herokuapp.com';
 export default {
   components: {
     Typeahead,
-    Notifi
   },
   data() {
     return {
@@ -246,6 +259,7 @@ export default {
         fieldName: "name",
         value: ''
       },
+      showConfirmDeleteAll: false,
       inputEquitpmentValue: '',
       inputMuscleValue: '',
       exInput: {
@@ -263,11 +277,19 @@ export default {
       exercises: [],
       file: {},
       uploadProgress: null,
+      validBodySections: [
+        "Full Body",
+        "Chest",
+        "Shoulder",
+        "Back",
+        "Arms",
+        "Core",
+        "Legs"      
+      ]
     }
-    
   },
   computed: {
-    equitpmentValues() {
+    equipmentValues() {
       return this.exInput.equipments = this.inputEquitpmentValue.split(',')
       .map(item => item.trim())
       .filter(item => item !== '') || null;
@@ -277,16 +299,12 @@ export default {
       return this.exInput.secondaryMuscles = this.inputMuscleValue.split(',')
       .map(item => item.trim())
       .filter(item => item !== '') || [];
+    },
+    invalidBodySection() {
+      return (this.exInput.bodySection.length && !this.validBodySections.includes(this.exInput.bodySection))
     }
   },
   mounted() {
-    this.$notify({
-      title: "Important message",
-      text: "Hello user!",
-    });
-    
-    // console.log(notify)
-    
     this.getExercises();
   },
   methods: {
@@ -296,9 +314,13 @@ export default {
       const id = this.exInput.id;
       
       this.$http.get(`${baseUrl}/exercises/${id}`).then((response) => {
-        // console.log(response.data);
+        console.log(response.data);
         this.exInput = response.data;
-        this.updateEquitpmentValues(null);
+        // this.checkForValidBodySection(re)
+        this.updateEquipmentValues(null);
+        this.updateMuscleValues(null);
+      }).catch((err)=>{
+        this.$notify({type:"error", text: err.message});
       })
     },
     getExercises(){
@@ -312,12 +334,12 @@ export default {
       const body = this.search;
 
       this.$http.post(`${baseUrl}/exercises/search`, body).then((response) => {
-        console.log(response);
-        this.exercises = response.data;
+        if(response && response.data && response.data.length) this.exercises = response.data;
+        else this.$notify({type: "warn", text:"no search results found"});
       }).catch((err) => {
         if(err) {
           console.error(err);
-          // this.$notify(err.message);
+          this.$notify({type:"error", text: err.message});
         }
       })
     },
@@ -348,10 +370,11 @@ export default {
       delete this.exInput.id;
       const body = this.exInput
       
-      console.log('createExercise', this.exInput);
       this.$http.post(`${baseUrl}/exercises/`, body).then((response) => {
-        console.log(response);
+        this.$notify({type:"success", text: `successfully created exercise ${response.data.name}`});
         this.getExercises();
+      }).catch((err)=>{
+        this.$notify({type:"error", text: err.message});
       })
     },
     updateExercise(){
@@ -360,8 +383,11 @@ export default {
 
       this.$http.patch(`${baseUrl}/exercises/${this.exInput.id}`, body).then((response) => {
         console.log(response);
+        this.$notify({type:"success", text: `successfully updated exercise ${response.data.name}`});
         this.getExercises();
-      })
+      }).catch((err)=>{
+        this.$notify({type:"error", text: err.message});
+      });
     },
     deleteExercise(){
       if(!this.exInput.id.length) return console.log('Ids is missing');
@@ -370,10 +396,30 @@ export default {
 
       this.$http.delete(`${baseUrl}/exercises/${id}`).then((response) => {
         console.log(response);
+        this.$notify({type:"warn", text: response.data});
         this.getExercises();
-      })
+      }).catch((err)=>{
+        console.error(err);
+        this.$notify({type:"error", text: err.message});
+      });
     },
-    updateEquitpmentValues(event) {
+    deleteAllExercises() {
+      const deletePromises = this.exercises.map((exercise) => {
+        return this.$http.delete(`${baseUrl}/exercises/${exercise.id}`);
+      });
+
+      Promise.all(deletePromises)
+        .then(() => {
+          this.$notify({ type: "warn", text: "the database has been nuked!" });
+          this.showConfirmDeleteAll = false;
+          this.getExercises();
+        })
+        .catch((error) => {
+          console.error("An error occurred while deleting exercises:", error);
+          this.$notify({ type: "error", text: "An error occurred while deleting exercises" });
+        });
+    },
+    updateEquipmentValues(event) {
       
       if(!event && this.exInput.equipments.length) {
         this.inputEquitpmentValue = this.exInput.equipments.join();
@@ -383,7 +429,13 @@ export default {
       }
     },
     updateMuscleValues(event) {
-      this.inputMuscleValue = event.target.value;
+      
+      if(!event && this.exInput.secondaryMuscles.length) {
+        this.inputMuscleValue = this.exInput.secondaryMuscles.join();
+      } else if(event.target.value) this.inputMuscleValue = event.target.value;
+      if(!this.inputMuscleValue.length){
+        return this.exInput.secondaryMuscles = null;
+      }
     },
     clearMuscles(){
       this.inputMuscleValue = "";
@@ -396,6 +448,18 @@ export default {
     clearSearch() {
       this.search.value = "";
       this.getExercises();
+    },
+    clearExInput() {
+      this.exInput.id = '';
+      this.exInput.category = '';
+      this.exInput.bodySection = '';
+      this.exInput.name = '';
+      this.exInput.equipments = [];
+      this.exInput.secondaryMuscles = [];
+      this.exInput.videoLink = '';
+      this.exInput.pictureLink = '';
+      this.clearMuscles();
+      this.clearEquitpment();
     }
   }
 }

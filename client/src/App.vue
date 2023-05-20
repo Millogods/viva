@@ -4,6 +4,7 @@ import { RouterLink, RouterView } from 'vue-router'
 
 <template lang="pug">
 RouterView
+Notifications(width="100%")
 </template>
 
 <style>
