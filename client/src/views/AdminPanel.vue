@@ -1,4 +1,5 @@
 <template lang="pug">
+Notfi 
 nav.navbar.is-dark(role="navigation", aria-label="main navigation")
   .navbar-brand
     a.navbar-item
@@ -28,6 +29,7 @@ nav.navbar.is-dark(role="navigation", aria-label="main navigation")
                 option(value="name") Name
                 option(value="category") Category
                 option(value="bodySection") Body Section
+                option(value="Equipment") Equipment
                 option(value="secondaryMuscles") Muscle Group
                 
           p.control.is-expanded
@@ -144,7 +146,7 @@ nav.navbar.is-dark(role="navigation", aria-label="main navigation")
                 //- .control
                 //-   label.checkbox
                 //-     input(type='checkbox' v-model="bodySection")
-                //-     | Shoulder
+                //-     | Shoulders
                 //- .control
                 //-   label.checkbox
                 //-     input(type='checkbox' v-model="bodySection")
@@ -152,7 +154,7 @@ nav.navbar.is-dark(role="navigation", aria-label="main navigation")
                 //- .control
                 //-   label.checkbox
                 //-     input(type='checkbox' v-model="bodySection")
-                //-     | Arm
+                //-     | Arms
                 //- .control
                 //-   label.checkbox
                 //-     input(type='checkbox' v-model="bodySection")
@@ -208,19 +210,6 @@ nav.navbar.is-dark(role="navigation", aria-label="main navigation")
                 button.button.is-link(v-if="selectedTab === 'update'" @click="updateExercise") Update
                 button.button.is-link(v-if="selectedTab === 'delete'" @click="deleteExercise") Delete
 
-          //- .box
-          //-   .field
-          //-   label.label Upload Excel Sheet
-          //-   .file.has-name
-          //-     label.file-label
-          //-       input.file-input(type='file', ref='fileInput' @change="uploadExercises")
-          //-       span.file-cta
-          //-         span.file-icon
-          //-           i.fas.fa-upload
-          //-         span.file-label
-          //-           | Choose a file&mldr;
-          //-       span.file-name 
-          //-         | {{ file.name || ""}}
           .box
             .field
               label.label Upload Excel Sheet
@@ -236,22 +225,20 @@ nav.navbar.is-dark(role="navigation", aria-label="main navigation")
                     | {{ file.name || &quot;&quot;}}
             progress.progress(:value='uploadProgress', max='100', v-if='uploadProgress !== null')
 
-                  //- progress(id="file" max="100" value="70")
         //- pre {{ exInput }}
-      
-       
-
-
     </template>
     
 <script>
 import Typeahead from 'vue3-simple-typeahead';
+import Notifi from '@kyvg/vue3-notification'
+
 
 const baseUrl = 'https://whispering-reef-15102.herokuapp.com';
 
 export default {
   components: {
     Typeahead,
+    Notifi
   },
   data() {
     return {
@@ -293,8 +280,14 @@ export default {
     }
   },
   mounted() {
+    this.$notify({
+      title: "Important message",
+      text: "Hello user!",
+    });
+    
+    // console.log(notify)
+    
     this.getExercises();
-    // this.uploadExercises();
   },
   methods: {
     getExercise(){
@@ -316,34 +309,18 @@ export default {
     },
     doSearch(){
       if(!this.search.value.length || !this.search.fieldName) return console.log('missing search value');
-      console.log('doSearch');
       const body = this.search;
 
       this.$http.post(`${baseUrl}/exercises/search`, body).then((response) => {
         console.log(response);
         this.exercises = response.data;
+      }).catch((err) => {
+        if(err) {
+          console.error(err);
+          // this.$notify(err.message);
+        }
       })
     },
-    // uploadExercises(){
-    //   const formData = new FormData();
-    //   formData.append('file', this.$refs.fileInput.files[0]);
-    //   this.file = this.$refs.fileInput.files[0];
-      
-    //   try {
-    //     this.$http.post(`${baseUrl}/exercises/upload`, formData, {
-    //       headers: {
-    //         "Content-Type": 'multipart/form-data'
-    //       }
-    //     })
-    //     .then((response) => {
-    //       console.log(response);
-    //       this.getExercises();
-    //     })
-    //   }
-    //   catch(err){
-    //     console.error(err);
-    //   }
-    // },
     uploadExercises() {
       const formData = new FormData();
       formData.append('file', this.$refs.fileInput.files[0]);
@@ -381,7 +358,7 @@ export default {
       const body = this.exInput
       console.log('updateExercise', this.exInput);
 
-      this.$http.patch(`${baseUrl}/exercises/`, body).then((response) => {
+      this.$http.patch(`${baseUrl}/exercises/${this.exInput.id}`, body).then((response) => {
         console.log(response);
         this.getExercises();
       })
