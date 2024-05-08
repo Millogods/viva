@@ -30,6 +30,7 @@ nav.navbar.is-dark(role="navigation", aria-label="main navigation")
                 option(value="bodySection") Body Section
                 option(value="Equipment") Equipment
                 option(value="secondaryMuscles") Muscle Group
+                option(value="chat") Chat
                 
           p.control.is-expanded
             input.input(type='text', placeholder='Search', v-model="search.value")
@@ -330,18 +331,22 @@ export default {
       })
     },
     doSearch(){
-      if(!this.search.value.length || !this.search.fieldName) return console.log('missing search value');
-      const body = this.search;
+      if(!this.search.value.length) return console.log('missing search value');
+      else if(!this.search.fieldName) return console.log('missing search criteria');
+      else if(this.search.fieldName && this.search.fieldName === "chat") return this.openSearch();
+      else {
+        const body = this.search;
 
-      this.$http.post(`${baseUrl}/exercises/search`, body).then((response) => {
-        if(response && response.data && response.data.length) this.exercises = response.data;
-        else this.$notify({type: "warn", text:"no search results found"});
-      }).catch((err) => {
-        if(err) {
-          console.error(err);
-          this.$notify({type:"error", text: err.message});
-        }
-      })
+        this.$http.post(`${baseUrl}/exercises/search`, body).then((response) => {
+          if(response && response.data && response.data.length) this.exercises = response.data;
+          else this.$notify({type: "warn", text:"no search results found"});
+        }).catch((err) => {
+          if(err) {
+            console.error(err);
+            this.$notify({type:"error", text: err.message});
+          }
+        })
+      }
     },
     uploadExercises() {
       const formData = new FormData();
@@ -364,7 +369,19 @@ export default {
       
       xhr.open('POST', `${baseUrl}/exercises/upload`);
       xhr.send(formData);
-    },  
+    },
+    openSearch(){
+      const body = {
+        criteria: this.search.value
+      }
+      
+      this.$http.post(`${baseUrl}/exercises/openSearch`, body).then((response) => {
+        
+        console.log(response);
+      }).catch((err)=>{
+        this.$notify({type:"error", text: err.message});
+      })
+    },
     createExercise(){
       if(!this.exInput.name) return console.log("Need Name")
       delete this.exInput.id;

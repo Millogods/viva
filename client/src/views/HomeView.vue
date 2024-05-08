@@ -3,77 +3,34 @@ nav.navbar.is-dark(role="navigation", aria-label="main navigation")
   .navbar-brand
     a.navbar-item
       .nav-title _VIVA
-      //- img(src="https://bulma.io/images/bulma-logo.png", alt="", width="112", height="28")
-    a.navbar-burger(role="button", aria-label="menu", aria-expanded="false")
-      span(aria-hidden="true")
-      span(aria-hidden="true")
-      span(aria-hidden="true")
+
 .main
   .layout-content
-    .block
-      .columns
-        .column
-          h1 Select Workout
-        .column
-          p.control.has-icons-left
-            input.input(type="text", placeholder="Search", v-model="searchInput")
-            span.icon.is-left
-              i.fas.fa-search(aria-hidden="true")
-
-    
-    .tabs.is-medium
-      ul
-        li.is-active
-          a Resistance
-        li
-          a Cardio
-        li
-          a Flexibility
-        
     .box
-      //- .field
-      //-   label.label Name
-      //-   .control
-      //-     input.input(type="text", placeholder="Text input")
-      
       .field
-        label.label Body Section
+        label.label Select
         .control 
           .select 
-            select
-              option Full Body
-              option Upper Body
-              option Lower Body
-              option Core
+            select(v-model="search.fieldName")
+              option(value="name") Name
+              option(value="category") Category
+              option(value="bodySection") Body Section
+              option(value="Equipment") Equipment
+              option(value="secondaryMuscles") Muscle Group
+              option(value="chat") Chat
 
-
-      .field.is-grouped.is-grouped-multiline
-        label.label Equipment
-        .control(v-for="(equipment, idx) in equipmentList")
-          .tags.has-addons
-            a.tag {{ equipment }}
-            a.tag.is-delete(@click="removeEquipmentItem(equipment, idx)")
       .field
+        label.label Search
         .control
-          Typeahead.input(
-            id="typeahead_id",
-            placeholder="Start writing...",
-            :items="equipmentData",
-            :minInputLength="1",
-            :itemProjection="itemProjectionFunction",
-            @selectItem="selectItemEventHandler",
-            @onInput="onInputEventHandler",
-            @onFocus="onFocusEventHandler",
-            @onBlur="onBlurEventHandler"
-          )
-          //- input.input(type="text", placeholder="Text input")
+          input.input(type='text', placeholder='Search', v-model="search.value")
+
       hr
       .buttons
-        button.button.is-link(@click="getExercise") Find Workout &nbsp;
+        button.button.is-link(@click="doSearch") Find Workout &nbsp;
           vue-feather(type="search" size="18")
           //- | &nbsp; Find Workout
     
-        button.button.is-error(@click="clearData") Clear &nbsp;
+        button.button.is-error(@click="clearSearch") Clear &nbsp;
           vue-feather(type="x", size="18")
           //- span Clear
 
@@ -83,44 +40,30 @@ nav.navbar.is-dark(role="navigation", aria-label="main navigation")
         h1.text(v-if="loading") Lets find you some exerisces...
         h1.text(v-else) Nothing will work unless you do
     .block(v-if="isLoaded")
-      strong found 3 results for arm workouts with 
-      | kettlebells
+      strong found {{ exercises.length }} results
     .block
       XyzTransitionGroup(xyz="fade stagger")
-        .box(v-if="isLoaded" v-for="exercise in data" :key="exercise.id" xyz="inherit down")
+        .box(v-if="isLoaded" v-for="exercise in exercises" :key="exercise.id" xyz="inherit down")
           article.media
             .media-left
               figure.image.is-96x96
-                img(:src="exercise.media.image", alt="Image")
+                img(:src="exercise.pictureLink", alt="Image")
             .media-content
               .content
                 strong {{ exercise.name }}
-                //- small @johnsmith
-                p {{ exercise.desription }}
-              .tags
-                .padding(v-for="muscle in exercise.primaryMuscles")
-                  span.tag.is-primary {{ muscle }}
+                | &nbsp; 
+                small {{ exercise.bodySection }} - {{ exercise.category }}
+                p Equipment: {{ exercise.equipments.join(', ') }}
+                .tags
+                  .padding(v-for="muscle in exercise.primaryMuscles")
+                    span.tag.is-primary {{ muscle }}
 
-              nav.level.is-mobile
-                .level-left
-                  a.level-item(aria-label="reply") Favorite
-                    span.icon
-                      vue-feather(type="star" size="18")
-                    div &nbsp;|
-
-                  a.level-item(aria-label="reply") Add
-                    span.icon
-                      vue-feather(type="plus" size="18")
-                      div &nbsp;|
-
-                  a.level-item(aria-label="reply") Hide
-                    span.icon
-                      vue-feather(type="minus-circle" size="18")
 </template>
 
 <script>
 import Typeahead from 'vue3-simple-typeahead';
 
+const baseUrl = 'https://whispering-reef-15102.herokuapp.com';
 
 export default {
   components: {
@@ -128,85 +71,86 @@ export default {
 	},
   data() {
     return {
-      data: [
-        {
-          id: 1,
-          name: 'Kettlebell Swing',
-          desription: 'A standard kettlebell swing is a great way to strengthen your posterior chain',
-          bodySection: 'Full body',
-          primaryMuscles: ['Glutes', 'Hamstrings', 'Quadriceps'],
-          media: {
-            image: 'https://www.muscleandfitness.com/wp-content/uploads/2020/02/DONexerciselibrary-065copy.png',
-            video: null
-          }
-        },
-        {
-          id: 2,
-          name: 'Kettlebell Clean Press',
-          desription: 'A standard kettlebell clean press is a great way to tigthen your ass',
-          bodySection: 'Full body',
-          primaryMuscles: ['Shoulders', 'Triceps', 'Quadriceps'],
-          media: {
-            image: 'https://www.strongfirst.com/wordpress/wp-content/uploads/2017/04/kettlebell-clean.jpg',
-            video: null
-          }
-        },
-        {
-          id: 3,
-          name: 'Kettlebell Windmill',
-          desription: 'A standard kettlebell windwall is a great way to strengthen arms',
-          bodySection: 'Full body',
-          primaryMuscles: ['Shoulders', 'Triceps', 'Core'],
-          media: {
-            image: 'https://www.mensjournal.com/.image/c_limit%2Ccs_srgb%2Cq_auto:good%2Cw_700/MTk2MTM3NDI5NDI1ODU4MDUz/kettlebell-swing-form.webp',
-            video: null
-          }
-        }
-
-      
-      ],
-      equipmentList: ["Kettlebell", "Dumbbell", "Sandbag", "Barbell", "Farmer's Walk Handles", "Box"],
-      equipmentData: [
-        "Kettlebell", "Dumbbell", "Sandbag", "Barbell", "Farmer's Walk Handles", "Box", "Bench",
-        "Reverse Hyperextension machine", "Swiss ball", "Landmine attachment", "Elevated Surface",
-        "Ab roller", "Yoga Mat", "Yoga blocks", "Yoga blanket", "Step bench"
-      ],
       loading: false,
       isLoaded: false,
-      searchInput: ''
+      search: {
+        fieldName: "name",
+        value: ''
+      },
+      inputEquitpmentValue: '',
+      inputMuscleValue: '',
+      exInput: {
+        id: '',
+        category:'',
+        bodySection: '',
+        name: '',
+        equipments: [],
+        // primaryMuscles: [],
+        secondaryMuscles: [],
+        videoLink: '',
+        pictureLink: '',
+      },
+      exercises: [],
+      validBodySections: [
+        "Full Body",
+        "Chest",
+        "Shoulder",
+        "Back",
+        "Arms",
+        "Core",
+        "Legs"      
+      ]
     }
   },
   mounted(){
-    // this.getExercises();
+    this.getExercises();
   },
   methods: {
-    getExercise(){
-      
+    getExercises(){
       this.loading = true;
-      setTimeout(()=> {
+      this.$http.get(`${baseUrl}/exercises/`).then((response) => {
+        console.log(response.data);
         this.isLoaded = true;
         this.loading = false;
-      },2000);
+        this.exercises = response.data;
+      });
     },
-    getExercises(){
-      this.$http.get('https://whispering-reef-15102.herokuapp.com/exercises/').then((response) => {
+    doSearch(){
+      if(!this.search.value.length) return console.log('missing search value');
+      else if(!this.search.fieldName) return console.log('missing search criteria');
+      else if(this.search.fieldName && this.search.fieldName === "chat") return this.openSearch();
+      else {
+        const body = this.search;
+
+        this.$http.post(`${baseUrl}/exercises/search`, body).then((response) => {
+          if(response && response.data && response.data.length) this.exercises = response.data;
+          else this.$notify({type: "warn", text:"no search results found"});
+        }).catch((err) => {
+          if(err) {
+            console.error(err);
+            this.$notify({type:"error", text: err.message});
+          }
+        })
+      }
+    },
+    openSearch(){
+      const body = {
+        criteria: this.search.value
+      }
+      
+      this.$http.post(`${baseUrl}/exercises/openSearch`, body).then((response) => {
+        
         console.log(response);
+      }).catch((err)=>{
+        this.$notify({type:"error", text: err.message});
       })
     },
-    clearData(){
+    clearSearch(){
       // this.isloaded = false;
-      this.equipmentList = [];
+      this.exercises = [];
+      this.search.value = "";
+      this.getExercises();
     },
-    selectItemEventHandler(item){
-      console.log(item);
-      if(!this.equipmentList.includes(item)) this.equipmentList.push(item);
-    },
-    removeEquipmentItem(item, idx){
-      console.log(item);
-      console.log(idx);
-      this.equipmentList.splice(idx, 1);
-    }
-    
   }
 }
 </script>
